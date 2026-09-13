@@ -11,14 +11,24 @@ export class ApiError extends Error {
   }
 }
 
+const fallbackMessage = 'Something went wrong. Please try again.'
+
+// ASP.NET model-binding failures surface as raw, developer-facing text
+// (e.g. "...could not be converted... Path: $.field"); show the fallback instead.
+function isTechnicalDetail(detail: string) {
+  return /path: \$\.|jsonexception|could not be converted/i.test(detail)
+}
+
 export function errorMessage(body: unknown) {
   if (body && typeof body === 'object') {
     const value = body as { errors?: Record<string, string[]>; detail?: string; message?: string }
     if (value.errors) return Object.values(value.errors).flat().join(' ')
-    return value.detail ?? value.message ?? 'Something went wrong. Please try again.'
+    const detail = value.detail ?? value.message
+    if (!detail || isTechnicalDetail(detail)) return fallbackMessage
+    return detail
   }
 
-  return 'Something went wrong. Please try again.'
+  return fallbackMessage
 }
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {

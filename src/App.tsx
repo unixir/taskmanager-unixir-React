@@ -184,7 +184,13 @@ function BoardDetail({ boardId, profile }: { boardId: number; profile: Profile |
     setBoard(current => current ? { ...current, tasks: current.tasks.map(item => item.id === task.id ? { ...item, status } : item) } : current)
     try { await api(`/api/todoitem/${task.id}`, { method: 'PUT', body: JSON.stringify({ title: task.title, description: task.description, status, priority: task.priority, dueDate: task.dueDate }) }) } catch (err) { setError(err instanceof Error ? err.message : 'Unable to move task.'); await load() }
   }
-  const addMember = async (event: FormEvent) => { event.preventDefault(); try { await api('/api/boardmember', { method: 'POST', body: JSON.stringify({ boardId, newMemberId: Number(memberId) }) }); setMemberId(''); await load() } catch (err) { setError(err instanceof Error ? err.message : 'Unable to add member.') } }
+  const addMember = async (event: FormEvent) => {
+    event.preventDefault()
+    const newMemberId = Number(memberId)
+    if (!memberId.trim() || !Number.isInteger(newMemberId) || newMemberId <= 0) { setError('Enter a valid user ID.'); return }
+    try { await api('/api/boardmember', { method: 'POST', body: JSON.stringify({ boardId, newMemberId }) }); setMemberId(''); await load() }
+    catch (err) { setError(err instanceof Error ? err.message : 'Unable to add member.') }
+  }
   const deleteTask = async (id: number) => { if (!window.confirm('Delete this task?')) return; try { await api(`/api/todoitem/${id}`, { method: 'DELETE' }); await load() } catch (err) { setError(err instanceof Error ? err.message : 'Unable to delete task.') } }
   if (error && !board) return <AppShell profile={profile}><main className="page"><p className="error">{error}</p><button onClick={() => navigate('/boards')}>Back to boards</button></main></AppShell>
   if (!board) return <AppShell profile={profile}><main className="page loading">Waking up your workspace…</main></AppShell>
