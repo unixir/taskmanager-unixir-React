@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { api, ApiError, tokenKey } from './api'
+import { useTheme } from './theme'
 import './App.css'
 
 const TaskStatus = { Todo: 0, InProgress: 1, Done: 2 } as const
@@ -23,8 +24,18 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
   return <label className="field"><span>{label}</span>{children}</label>
 }
 
+function ThemeToggle() {
+  const { theme, toggleTheme } = useTheme()
+  const label = `Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`
+  return <button type="button" className="icon-button theme-toggle" onClick={toggleTheme} aria-label={label} title={label}>
+    {theme === 'dark'
+      ? <svg viewBox="0 0 20 20" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><circle cx="10" cy="10" r="4" /><path d="M10 1.5v2M10 16.5v2M18.5 10h-2M3.5 10h-2M15.66 4.34l-1.41 1.41M5.75 14.25l-1.41 1.41M15.66 15.66l-1.41-1.41M5.75 5.75 4.34 4.34" /></svg>
+      : <svg viewBox="0 0 20 20" width="18" height="18" fill="currentColor"><path d="M17.5 12.5A7.5 7.5 0 0 1 7.5 2.5a.75.75 0 0 0-.98-.95A8.5 8.5 0 1 0 18.45 13.5a.75.75 0 0 0-.95-1Z" /></svg>}
+  </button>
+}
+
 function AuthCard({ title, subtitle, children }: { title: string; subtitle: ReactNode; children: ReactNode }) {
-  return <main className="auth-shell"><section className="auth-card"><div className="brand">Taskflow</div><h1>{title}</h1><p className="muted">{subtitle}</p>{children}</section></main>
+  return <main className="auth-shell"><section className="auth-card"><div className="auth-card-top"><div className="brand">UniTaskFlow</div><ThemeToggle /></div><h1>{title}</h1><p className="muted">{subtitle}</p>{children}</section></main>
 }
 
 function Signup() {
@@ -83,7 +94,7 @@ function Signin() {
   return <AuthCard title="Welcome back" subtitle="Sign in to pick up where you left off.">
     <form onSubmit={submit}><Field label="Email"><input name="email" type="email" maxLength={30} required /></Field><Field label="Password"><input name="password" type="password" required /></Field>{passwordReset && <p className="success" role="status">Your password has been reset. You can now sign in.</p>}{error && <p className="error">{error}</p>}<button>Sign in</button></form>
     <p className="switch"><button className="link" onClick={() => navigate('/forgot-password')}>Forgot your password?</button></p>
-    <p className="switch">New to Taskflow? <button className="link" onClick={() => navigate('/signup')}>Create an account</button></p>
+    <p className="switch">New to UniTaskFlow? <button className="link" onClick={() => navigate('/signup')}>Create an account</button></p>
   </AuthCard>
 }
 
@@ -135,7 +146,7 @@ function ResetPassword() {
 }
 
 function AppShell({ children, profile }: { children: ReactNode; profile: Profile | null }) {
-  return <><header><button className="brand link" onClick={() => navigate('/boards')}>Taskflow</button><div className="header-actions">{profile && <span className="user-chip" title={`User ID: ${profile.id}`}>{profile.name}</span>}<button className="quiet" onClick={() => { localStorage.removeItem(tokenKey); navigate('/signin') }}>Sign out</button></div></header>{children}</>
+  return <><header><button className="brand link" onClick={() => navigate('/boards')}>UniTaskFlow</button><div className="header-actions">{profile && <span className="user-chip" title={`User ID: ${profile.id}`}>{profile.name}</span>}<ThemeToggle /><button className="quiet" onClick={() => { localStorage.removeItem(tokenKey); navigate('/signin') }}>Sign out</button></div></header>{children}</>
 }
 
 function Boards({ profile }: { profile: Profile | null }) {

@@ -1,6 +1,68 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600&display=swap');
 
+:root {
+  --bg: #f7f7fb;
+  --paper: #fff;
+  --surface: #eeecf7;
+  --ink: #24213a;
+  --muted: #777389;
+  --purple: #6254d9;
+  --purple-contrast: #fff;
+  --line: #e5e3ed;
+  --border-input: #d9d6e3;
+  --shadow: rgba(45, 39, 70, .08);
+  --shadow-strong: rgba(45, 36, 99, .12);
+  --blob-1: #ded9ff;
+  --blob-2: #d8f7ed;
+  --auth-bg: #f8f7fc;
+  --auth-card-bg: rgba(255, 255, 255, .88);
+  --auth-card-border: #fff;
+  --icon-muted: #9d98aa;
+  --task-meta: #888397;
+  --empty-border: #d7d4e1;
+  --avatar-fg: #4e4077;
+  --avatar-bg: #e7e0ff;
+  --chip-bg: #dddce6;
+  --error: #b22752;
+  --success: #237462;
+  --priority-low-fg: #237462; --priority-low-bg: #dff6ee;
+  --priority-med-fg: #9b6e11; --priority-med-bg: #fff1cf;
+  --priority-high-fg: #bd3455; --priority-high-bg: #fde4ea;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #16151f;
+  --paper: #1f1e2c;
+  --surface: #272635;
+  --ink: #eceaf6;
+  --muted: #9d99b3;
+  --purple: #8577ff;
+  --purple-contrast: #fff;
+  --line: #34324a;
+  --border-input: #3c3a54;
+  --shadow: rgba(0, 0, 0, .35);
+  --shadow-strong: rgba(0, 0, 0, .45);
+  --blob-1: #2c2650;
+  --blob-2: #17332c;
+  --auth-bg: #16151f;
+  --auth-card-bg: rgba(31, 30, 44, .88);
+  --auth-card-border: #2c2a3d;
+  --icon-muted: #8a86a0;
+  --task-meta: #948fa4;
+  --empty-border: #3c3a54;
+  --avatar-fg: #d8d0ff;
+  --avatar-bg: #3a3160;
+  --chip-bg: #3c3a54;
+  --error: #ff6f91;
+  --success: #4fd8ab;
+  --priority-low-fg: #4fd8ab; --priority-low-bg: #16362c;
+  --priority-med-fg: #ffcf6b; --priority-med-bg: #3a2f10;
+  --priority-high-fg: #ff6f91; --priority-high-bg: #3a1626;
+  color-scheme: dark;
+}
+
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 320px; color: #24213a; background: #f7f7fb; font-family: "DM Sans", sans-serif; }
+body { margin: 0; min-width: 320px; color: var(--ink); background: var(--bg); font-family: "DM Sans", sans-serif; transition: background-color .15s ease, color .15s ease; }
 button, input, textarea, select { font: inherit; }
 button { cursor: pointer; }
