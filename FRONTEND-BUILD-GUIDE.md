@@ -287,11 +287,11 @@ Route prefix: `api/boardmember`. All require bearer auth.
 ### 6.1 `POST /api/boardmember` — add a member (owner only)
 Request (`AddBoardMemberRequest`):
 ```json
-{ "boardId": 1, "newMemberId": 12 }
+{ "boardId": 1, "newMemberEmail": "bob@x.com" }
 ```
-Response `201 Created` — `BoardMemberDTO`. `409 Conflict` if that user is already a member (duplicate membership is rejected cleanly, not a raw DB error).
+Response `201 Created` — `BoardMemberDTO`. `404 Not Found` if no user is registered with that email. `409 Conflict` if that user is already a member (duplicate membership is rejected cleanly, not a raw DB error).
 
-There is no "search users by email" endpoint yet — to add a member, the UI needs the target user's numeric ID (e.g. collect it from a shared "your user ID" screen on the profile page, or add a lightweight lookup later). Flag this as a known gap when building the "add member" UI; a reasonable interim UX is a text field for user ID with the profile page (`GET /api/user/profile`) shown to the current user so they know their own ID to share.
+Members are added by email address (not numeric user ID) — the backend resolves the email to a user internally, so the frontend never needs to know or expose another user's ID.
 
 ### 6.2 `GET /api/boardmember/{id}` — one membership record by its own ID
 ### 6.3 `GET /api/boardmember/board/{boardId}` — all members of a board
