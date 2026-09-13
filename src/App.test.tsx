@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from './App'
-import { apiUrl } from './api'
+import { apiUrl, tokenKey } from './api'
 
 describe('authentication routes', () => {
   beforeEach(() => {
@@ -71,5 +71,97 @@ describe('authentication routes', () => {
         body: JSON.stringify({ email: 'jane@example.com', code: '123456', newPassword: 'NewSecret123' }),
       }),
     )
+  })
+})
+
+describe('board member management', () => {
+  const profile = { id: 1, name: 'Owner', emailAddress: 'owner@example.com', age: 30, role: 'User' }
+  const memberProfile = { id: 2, name: 'Bob', emailAddress: 'bob@example.com', age: 30, role: 'User' }
+  const existingMember = { id: 5, boardId: 1, userId: 2, userName: 'Bob', userEmail: 'bob@example.com', joinedAt: '2026-01-01T00:00:00Z' }
+  const baseBoard = { id: 1, title: 'Board', description: null, ownerId: 1, ownerName: 'Owner', tasks: [], members: [existingMember] }
+
+  function jsonResponse(body: unknown, status = 200) {
+    return new Response(status === 204 ? null : JSON.stringify(body), { status })
+  }
+
+  function mockRoutes(routes: { profile?: typeof profile; board?: typeof baseBoard; onBoardMemberPost?: () => Response; onBoardMemberDelete?: () => Response }) {
+    vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input)
+      const method = init?.method ?? 'GET'
+      if (url === `${apiUrl}/api/user/profile`) return jsonResponse(routes.profile ?? profile)
+      if (url === `${apiUrl}/api/board/1` && method === 'GET') return jsonResponse(routes.board ?? baseBoard)
+      if (url === `${apiUrl}/api/boardmember` && method === 'POST') return (routes.onBoardMemberPost ?? (() => jsonResponse({ ...existingMember, id: 6 }, 201)))()
+      if (url.startsWith(`${apiUrl}/api/boardmember?`) && method === 'DELETE') return (routes.onBoardMemberDelete ?? (() => jsonResponse(null, 204)))()
+      throw new Error(`Unhandled request: ${method} ${url}`)
+    })
+  }
+
+  beforeEach(() => {
+    localStorage.clear()
+    localStorage.setItem(tokenKey, 'test-token')
+    window.history.pushState({}, '', '/boards/1')
+    vi.stubGlobal('fetch', vi.fn())
+  })
+
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('adds a member by email and refreshes the member list', async () => {
+    mockRoutes({ board: baseBoard })
+    render(<App />)
+
+    await screen.findByText('Bob')
+    fireEvent.change(screen.getByPlaceholderText('Member email'), { target: { value: 'new@example.com' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add member' }))
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      `${apiUrl}/api/boardmember`,
+      expect.objectContaining({ method: 'POST', body: JSON.stringify({ boardId: 1, newMemberEmail: 'new@example.com' }) }),
+    ))
+    await waitFor(() => expect(screen.getByPlaceholderText('Member email')).toHaveValue(''))
+  })
+
+  it('shows an error when adding an email with no matching account', async () => {
+    mockRoutes({ onBoardMemberPost: () => jsonResponse({ detail: 'No user found with email new@example.com.' }, 404) })
+    render(<App />)
+
+    await screen.findByText('Bob')
+    fireEvent.change(screen.getByPlaceholderText('Member email'), { target: { value: 'new@example.com' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Add member' }))
+
+    expect(await screen.findByText('No user found with email new@example.com.')).toBeInTheDocument()
+  })
+
+  it('removes a member after confirmation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    mockRoutes({ board: baseBoard })
+    render(<App />)
+
+    await screen.findByText('Bob')
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Bob' }))
+
+    await waitFor(() => expect(fetch).toHaveBeenCalledWith(
+      `${apiUrl}/api/boardmember?boardId=1&memberId=2`,
+      expect.objectContaining({ method: 'DELETE' }),
+    ))
+  })
+
+  it('does not call the API when removal is cancelled', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(false)
+    mockRoutes({ board: baseBoard })
+    render(<App />)
+
+    await screen.findByText('Bob')
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Bob' }))
+
+    await new Promise(resolve => setTimeout(resolve, 0))
+    expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining('/api/boardmember'), expect.objectContaining({ method: 'DELETE' }))
+  })
+
+  it('hides the remove control from non-owner members', async () => {
+    mockRoutes({ profile: memberProfile, board: baseBoard })
+    render(<App />)
+
+    await screen.findByText('bob@example.com')
+    expect(screen.queryByRole('button', { name: 'Remove Bob' })).not.toBeInTheDocument()
   })
 })
